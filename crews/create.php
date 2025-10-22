@@ -46,48 +46,41 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <title>Yeni Crew Ekle</title>
 </head>
 <body>
-    <div class="container mt-3">
-        <div class="card m-2 mx-auto" >
-            <div class="card-body">
-                <div class="row justify-content-center">
-                    <div class="col-4">
-                        <h2 class ="mb-3">Yeni Crew Ekle</h2>
-                    </div>
+    <div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 500px;">
+        <div class="card-body">
+            <h2 class="mb-4 text-center">Yeni Crew Ekle</h2>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="name" class="form-label">İsim</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
                 </div>
-                <div class="row justify-content-center">
-                    <div class="col-4">
-                            <label for="name" class="form-label">İsim</label>
-                            <input type="text" class="form-control" id="name" name ="name" required>
-                    </div>
-                    <div class= "row justify-content-center">
-                        <div class="col-4">
-                            <label for="surname" class="form-label">Soyisim</label>
-                            <input type="text" class="form-control" id="surname" name ="surname" required>
-                        </div>
-                    </div>
-                    <div class= "row justify-content-center">
-                        <div class="col-4">
-                            <label for="role" class="form-label">Rol</label> 
-                                <select id="role" class="form-select" aria-label="Seçiniz" name="role" required>
-                                    <option value="">Seçiniz...</option>
-                                    <option value="Captain">Captain</option>
-                                    <option value="First Officer">First Officer</option>
-                                    <option value="Purser">Purser</option>
-                                    <option value="Flight Attendant">Flight Attendant</option>
-                                </select>
-                        </div>
-                    </div>
-                    <div class= "row justify-content-center">
-                        <div class="col-4">
-                            <div class="text-end mt-3">
-                                <button type="submit" class ="btn btn-success">Kaydet</button>
-                            </div>
-                        </div>
-                    </div>
+
+                <div class="mb-3">
+                    <label for="surname" class="form-label">Soyisim</label>
+                    <input type="text" class="form-control" id="surname" name="surname" required>
                 </div>
-            </div>
+
+                <div class="mb-3">
+                    <label for="role" class="form-label">Rol</label>
+                    <select id="role" class="form-select" name="role" required>
+                        <option value="">Seçiniz...</option>
+                        <option value="Captain">Captain</option>
+                        <option value="First Officer">First Officer</option>
+                        <option value="Purser">Purser</option>
+                        <option value="Flight Attendant">Flight Attendant</option>
+                    </select>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
     
 </body>
 </html>

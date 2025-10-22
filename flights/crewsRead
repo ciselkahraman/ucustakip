@@ -12,9 +12,9 @@ for ($i = 0 ; $i < 7 ; $i++){
 $startDateTime = $days[0] . ' 00:00:00';
 $endDateTime = $days[6] . ' 23:59:59';
 
-//aircraft verilerini çekme
-$aircrafts = $pdo
-->query("SELECT id, tailNumber, type FROM aircrafts ORDER BY tailNumber")
+//crew verileri çekme
+$crews = $pdo
+->query("SELECT id, name, surname, role FROM crews WHERE is_active = 1 ORDER BY name")
 ->fetchAll(PDO::FETCH_ASSOC);
 
 //flights verileri çekme
@@ -31,45 +31,29 @@ $stmt->execute([
 ]);
 $flights = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-//uçuş + crew verilerini aircraft bazında çekme
-$sqlAircraftFlights = "SELECT f.id as flight_id, f.flightNumber, f.departureDate, f.aircraft,
-                          a1.airportCode AS depCode, a2.airportCode AS arrCode,
-                          c.name, c.surname, c.role AS crew_role
-                    FROM flights f
-                    JOIN flight_crews fc on fc.flight_id = f.id
+//uçuşlara bağlı tüm crew'leri çekme
+$sqlCrewFlights = "SELECT fc.flight_id, fc.crew_id, fc.role_in_flight,
+                          c.name, c.surname, c.role AS crew_role,
+                          f.departureDate, a1.airportCode AS depCode, a2.airportCode AS arrCode, f.flightNumber
+                    FROM flight_crews fc
                     JOIN crews c ON c.id = fc.crew_id
+                    JOIN flights f ON f.id = fc.flight_id
                     JOIN airports a1 ON a1.id = f.departureAirport
                     JOIN airports a2 ON a2.id = f.arrivalAirport
-                    WHERE f.departureDate BETWEEN :start AND :end
-                    ORDER BY f.departureDate";
+                    WHERE f.departureDate BETWEEN :start AND :end";
 
-$stmtAircraftFlights = $pdo->prepare($sqlAircraftFlights);
-$stmtAircraftFlights->execute([
+$stmtCrewFlights = $pdo->prepare($sqlCrewFlights);
+$stmtCrewFlights->execute([
   ':start' => $startDateTime,
   ':end' => $endDateTime
 ]);
-$rows = $stmtAircraftFlights->fetchAll(PDO::FETCH_ASSOC);
+$crewFlightRows = $stmtCrewFlights->fetchAll(PDO::FETCH_ASSOC);
 
-//gruplama: aircraft gün flight crews
-$aircraftFlights = [];
-foreach($rows as $r){
-    $day = date('Y-m-d', strtotime($r['departureDate']));
-    $fid = $r['flight_id'];
-    $aid = $r['aircraft'];
-
-    if(!isset($aircraftFlights[$aid][$day][$fid])){
-      $aircraftFlights[$aid][$day][$fid] =[
-        'flightNumber' => $r['flightNumber'],
-        'depCode' => $r['depCode'],
-        'arrCode' => $r['arrCode'],
-        'crews' => []
-
-      ];
-    }
-    if ($r['name']) {
-      $aircraftFlights[$aid][$day][$fid]['crews'][] =
-        $r['name'] . " " . $r['surname'] . " (" . $r['crew_role'] . ")";
-    }
+//crewleri gruplama 
+$crewFlights= [];
+foreach($crewFlightRows as $row){
+    $day = date('Y-m-d', strtotime($row['departureDate']));
+    $crewFlights[$row['crew_id']][$day][] = $row;
 }
 
 ?>
@@ -99,7 +83,7 @@ foreach($rows as $r){
       <table class="table table-hover table-bordered align-middle">
       <thead>
         <tr>
-          <th>Aircrafts</th>
+          <th>Crews</th>
           <?php foreach ($days as $d): ?>
               <th><?= date('d M', strtotime($d)) ?></th>
           <?php endforeach; ?>
@@ -107,11 +91,11 @@ foreach($rows as $r){
       </thead>
       
       <tbody>
-      <?php foreach ($aircrafts as $a): ?> 
+      <?php foreach ($crews as $c): ?> 
         <?php //uçuşu olanları listele
         $hasFlight = false;
         foreach ($days as $d){
-          if(isset($aircraftFlights[$a['id']][$d])){
+          if(isset($crewFlights[$c['id']][$d])){
             $hasFlight = true;
             break;
           }
@@ -120,20 +104,17 @@ foreach($rows as $r){
         ?>
 
         <tr>
-          <td><?= htmlspecialchars($a['tailNumber'] ."(" . $a['type'] . ")")?></td>
+          <td><?= $c['name'] . " " . $c['surname'] . " " ."(" . $c['role'] . ")"?></td>
           <?php foreach($days as $d): ?>
             <td>
               <?php 
-              if(isset($aircraftFlights[$a['id']][$d])){
-                foreach($aircraftFlights[$a['id']][$d] as $f){
-                  echo "<strong>" . htmlspecialchars($f['flightNumber']) . " (" . htmlspecialchars($f['depCode']) . " → " . htmlspecialchars($f['arrCode']) . ") </strong><br>";
-                  if(!empty($f['crews'])){
-                    echo htmlspecialchars(implode(", ", $f['crews'])) . "<br>";
-                  }
-                  echo"<hr>";
+              if(isset($crewFlights[$c['id']][$d])){
+                foreach($crewFlights[$c['id']][$d] as $f){
+                  echo $f['flightNumber'] . " ({$f['depCode']} → {$f['arrCode']})<br>";
                 }
+              }else{
+                echo "-";
               }
-
               ?>
             </td>
           <?php endforeach; ?>
